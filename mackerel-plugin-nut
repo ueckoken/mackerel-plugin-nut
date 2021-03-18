@@ -1,0 +1,26 @@
+#!/bin/bash
+
+ups_list=$(upsc -l)
+
+if [ "$MACKEREL_AGENT_PLUGIN_META" = "1" ]; then
+  metrics=""
+  for ups in $ups_list
+  do
+    metric="{\"name\": \"$ups\", \"label\": \"$ups\", \"stacked\": false}"
+    if [ -z $metrics ]; then
+      metrics=$metric
+    else
+      metrics="${metrics}, ${metric}"
+    fi
+  done
+  echo "# mackerel-agent-plugin"
+  echo "{\"graphs\": {\"ups_battery_charge\": {\"label\": \"UPS Battery Charge\", \"unit\": \"percentage\", \"metrics\": [$metrics]}}}"
+else
+  for ups in $ups_list
+  do
+    charge=$(upsc $ups battery.charge)
+    date=$(date +%s)
+    echo -e "ups_battery_charge.$ups\t$charge\t$date"
+  done
+fi
+
